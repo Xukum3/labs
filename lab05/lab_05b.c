@@ -24,7 +24,7 @@ str* str_new_elem(str* last, char symb){
 void str_print(str *st) {
     str* ptr = st;
     printf("New line:");
-    if(!ptr) printf("_\n");
+    if(!ptr) printf("empty\n");
     else{
         while (ptr) {
             printf("%c", ptr->data);
@@ -132,22 +132,19 @@ char* get_str(int *n){
 
 int main() {
     str* data = init_str();
-    int p = 1;
     char* st;
-    char* strb;
     int n;
     printf("Enter lines:\n");
-    while(p != -1){
+    while(1){
         st=get_str(&n);
-        strb = st;
         if(n < 0){
             printf("\nEOF\n");
-            new_str(strb, data);
+            new_str(st, data);
             str_print(data->next);
             str_erase(data);
             break;
         }
-        new_str(strb, data);
+        new_str(st, data);
         str_print(data->next);
         str_erase(data);
         free(st);
