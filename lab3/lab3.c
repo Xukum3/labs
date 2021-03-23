@@ -48,10 +48,8 @@ typedef struct InfoType{
 
 typedef struct Item{
   int k1;
-  int ver1;
   char* k2;
   int hash2;
-  int ver2;
   InfoType info;
   int ver;
   struct Item* next;
@@ -139,7 +137,6 @@ void NewItem(Table* table, Item* item){
         }
       }
       item->next = NULL;
-      item->ver1 = 0;
       item->ver = 0;
 
     
@@ -168,11 +165,9 @@ void NewItem(Table* table, Item* item){
             is_find = 1;
             is_new = 0;
 
-            item->ver1=ptr->version;
             item->ver=ptr->item->ver + 1;
 
             item->next = ptr->item;
-            item->ver2 = ptr->item->ver2;
 
             Item* tmp;
             tmp = (Item*)malloc(sizeof(Item));
@@ -196,7 +191,6 @@ void NewItem(Table* table, Item* item){
 
       item->next = NULL;
       item->ver = 0;
-      item->ver1 = table->ks1[place].key->version + 1;
 
       nw->next = table->ks1[place].key;
       nw->version = table->ks1[place].key->version + 1;
@@ -221,12 +215,11 @@ void NewItem(Table* table, Item* item){
       table->ks2[item->hash2].key->item = insert;
       table->ks2[item->hash2].key->next = NULL;
       table->ks2[item->hash2].key->version = 0;
-      table->ks2[item->hash2].key->item->ver2= 0;
     }
     else{
       if(is_new == 0){
         key2* ptr2 = table->ks2[item->hash2].key;
-        while(ptr2->version != insert->ver2){
+        while(strcmp(ptr2->item->k2, insert->k2) != 0){
           ptr2 = ptr2->next;
         }
         ptr2->item = insert;
@@ -238,7 +231,6 @@ void NewItem(Table* table, Item* item){
         nw2->next = table->ks2[item->hash2].key;
 
         nw2->version = table->ks2[item->hash2].key->version + 1;
-        nw2->item->ver2 = nw2->version;
 
         table->ks2[item->hash2].key = nw2;
       }
@@ -277,19 +269,40 @@ void k2_search_uno(){
 void k2_reorginize(){
 }*/
 
-void output(Table* table){
+void output_1(Table* table){
   for(int i = 0; i < table->rsize1; i++){
-    printf("\n\n\n%d:\n", table->ks1[i].val);
+    printf("\n\n%d:\n", table->ks1[i].val);
     key1* ptr = table->ks1[i].key;
     Item* itptr;
     while(ptr != NULL){
+      printf(" %d\n",ptr->version);
       itptr = ptr->item;
       while(itptr != NULL){
-        printf("v1: %d, hash: %d, v2: %d, key2:%s, v:%d  ", itptr->ver1, itptr->hash2, itptr->ver2, itptr->k2, itptr->ver);
+        printf("hash: %d, key2:%s, v:%d  ", itptr->hash2, itptr->k2, itptr->ver);
         itptr = itptr->next;
       }
-      printf("\n\n");
+      printf("\n");
       ptr = ptr->next; 
+    }
+  }
+}
+
+void output_2(Table* table){
+  for(int i = 0; i < table->size2; i++){
+    if(table->ks2[i].key != NULL){
+      printf("\n\nhash: %d\n", i);
+      key2* ptr = table->ks2[i].key;
+      Item* itptr;
+      while(ptr != NULL){
+        printf(" \nv2:%d\n", ptr->version);
+        itptr = ptr->item;
+        while(itptr != NULL){
+          printf("k1: %d, key2:%s, v:%d;  ", itptr->k1, itptr->k2, itptr->ver);
+          itptr = itptr->next;
+        }
+        printf("\n");
+        ptr = ptr->next;
+      }
     }
   }
 }
@@ -336,7 +349,9 @@ int main()
     new.hash2 = hash(key2, size2);
     new.info = info;
     NewItem(&table, &new);
-    output(&table);
+    output_1(&table);
+    printf("#-----------------------");
+    output_2(&table);
 
     free(key2);
   }
