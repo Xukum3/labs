@@ -53,6 +53,8 @@ typedef struct Item{
   InfoType info;
   int ver;
   struct Item* next;
+  struct key1* ptr1;
+  struct key2* ptr2;
 }Item;
 
 typedef struct Table{
@@ -70,23 +72,25 @@ typedef struct Table{
 
 //keyspace1--------------------------------------------------------------------------------------------
 typedef struct key1{
-  int version;
   Item* item;
   struct key1* next;
+  struct key1* parent;
 }key1;
 
 typedef struct keyspace1{
+  int version;
   unsigned int val;
   key1* key;
 }keyspace1;
 
 typedef struct key2{
     Item* item;
-    int version;
     struct key2* next;
+    struct key2* parent;
 }key2;
 
 typedef struct keyspace2{
+    int version;
     key2* key;
 }keyspace2;
 
@@ -139,7 +143,7 @@ void NewItem(Table* table, Item* item){
       item->next = NULL;
       item->ver = 0;
 
-    
+      //в начало
       table->ks1[i].key = (key1*)malloc(sizeof(key1));
                                                                 //copy item
       table->ks1[i].key->item = (Item*)malloc(sizeof(Item));
@@ -149,7 +153,9 @@ void NewItem(Table* table, Item* item){
       memcpy(table->ks1[i].key->item->k2, item->k2, strlen(item->k2)+1);
 
       table->ks1[i].key->next = NULL;
-      table->ks1[i].key->version = 0;             //return table->ks1[i].key->item
+      table->ks1[i].version = 0;             //return table->ks1[i].key->item
+      table->ks1[i].key->parent = NULL;
+      table->ks1[i].key->item->ptr1 = table->ks1[i].key;
 
       insert = table->ks1[i].key->item;
     }
@@ -177,6 +183,9 @@ void NewItem(Table* table, Item* item){
             memcpy(tmp->k2, item->k2, strlen(item->k2) + 1);
 
             ptr->item = tmp;
+            ptr->item->ptr1 = ptr;
+            ptr->item->ptr2 = ptr->item->next->ptr2;
+            ptr->item->next->ptr2->item = ptr->item;
             insert = ptr->item;
             break;
         }
@@ -193,13 +202,18 @@ void NewItem(Table* table, Item* item){
       item->ver = 0;
 
       nw->next = table->ks1[place].key;
-      nw->version = table->ks1[place].key->version + 1;
+      nw->next->parent = nw;
+      nw->parent = NULL;
+
+      table->ks1[place].version += 1;
       //copy elem (dest, item)
       nw->item = (Item*)malloc(sizeof(Item));
       memcpy(nw->item, item, sizeof(Item));
 
       nw->item->k2 = (char*)malloc(strlen(item->k2) + 1);
       memcpy(nw->item->k2, item->k2, strlen(item->k2) + 1);
+
+      nw->item->ptr1 = nw;
 
       table->ks1[place].key = nw;
 
@@ -214,23 +228,22 @@ void NewItem(Table* table, Item* item){
       table->ks2[item->hash2].key= (key2*)malloc(sizeof(key2));
       table->ks2[item->hash2].key->item = insert;
       table->ks2[item->hash2].key->next = NULL;
-      table->ks2[item->hash2].key->version = 0;
+      table->ks2[item->hash2].key->parent = NULL;
+      table->ks2[item->hash2].version = 0;
+      table->ks2[item->hash2].key->item->ptr2 = table->ks2[item->hash2].key;
     }
     else{
-      if(is_new == 0){
-        key2* ptr2 = table->ks2[item->hash2].key;
-        while(strcmp(ptr2->item->k2, insert->k2) != 0){
-          ptr2 = ptr2->next;
-        }
-        ptr2->item = insert;
-      }
-      else{
+      if(is_new != 0){
         key2* nw2 = (key2*)malloc(sizeof(key2));
 
         nw2->item = insert;
-        nw2->next = table->ks2[item->hash2].key;
+        nw2->item->ptr2 = nw2;
 
-        nw2->version = table->ks2[item->hash2].key->version + 1;
+        nw2->next = table->ks2[item->hash2].key;
+        nw2->next->parent = nw2;
+        nw2->parent = NULL;
+
+        table->ks2[item->hash2].version += 1;
 
         table->ks2[item->hash2].key = nw2;
       }
@@ -274,8 +287,10 @@ void output_1(Table* table){
     printf("\n\n%d:\n", table->ks1[i].val);
     key1* ptr = table->ks1[i].key;
     Item* itptr;
+    int j = 0;
     while(ptr != NULL){
-      printf(" %d\n",ptr->version);
+      printf(" %d\n",table->ks1[i].version-j);
+      j++;
       itptr = ptr->item;
       while(itptr != NULL){
         printf("hash: %d, key2:%s, v:%d  ", itptr->hash2, itptr->k2, itptr->ver);
@@ -293,8 +308,10 @@ void output_2(Table* table){
       printf("\n\nhash: %d\n", i);
       key2* ptr = table->ks2[i].key;
       Item* itptr;
+      int j = 0;
       while(ptr != NULL){
-        printf(" \nv2:%d\n", ptr->version);
+        printf(" %d\n",table->ks2[i].version-j);
+        j++;
         itptr = ptr->item;
         while(itptr != NULL){
           printf("k1: %d, key2:%s, v:%d;  ", itptr->k1, itptr->k2, itptr->ver);
