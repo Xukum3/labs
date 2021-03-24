@@ -36,6 +36,13 @@
 - удаление из таблицы всех элементов, заданного ключом в одном из ключевых пространств;
 - вывод содержимого таблицы на экран (или текстовый файл); при этом формат вывода должен соответствовать приведенной выше структуре элемента таблицы;
 - особые операции, определяемые в соответствующем пространстве ключей.
+
+todo
+output all
+insert                          done
+delete by key1                  done
+delete by key1 + ver
+reorginize
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -43,7 +50,9 @@
 
 //structs------------------------------------
 typedef struct InfoType{
-  int n1;
+  float f1;
+  float f2;
+  char* s1;
 }InfoType;
 
 typedef struct Item{
@@ -94,7 +103,9 @@ typedef struct keyspace2{
     key2* key;
 }keyspace2;
 
-int bin_find(keyspace1* ks1, int size, int key){
+int hash(char*, int);
+
+int bin_find(keyspace1* ks1, int size, unsigned int key){
   int l = 0, r = size - 1;
   int m;
   while(l <= r){
@@ -152,6 +163,9 @@ void NewItem(Table* table, Item* item){
       table->ks1[i].key->item->k2 = (char*)malloc(strlen(item->k2)+1);
       memcpy(table->ks1[i].key->item->k2, item->k2, strlen(item->k2)+1);
 
+      table->ks1[i].key->item->info.s1 = (char*)malloc(strlen(item->info.s1)+1);
+      memcpy(table->ks1[i].key->item->info.s1, item->info.s1, strlen(item->info.s1)+1);
+
       table->ks1[i].key->next = NULL;
       table->ks1[i].version = 0;             //return table->ks1[i].key->item
       table->ks1[i].key->parent = NULL;
@@ -182,10 +196,14 @@ void NewItem(Table* table, Item* item){
             tmp->k2=(char*)malloc(strlen(item->k2) + 1);
             memcpy(tmp->k2, item->k2, strlen(item->k2) + 1);
 
+            tmp->info.s1=(char*)malloc(strlen(item->info.s1) + 1);
+            memcpy(tmp->info.s1, item->info.s1, strlen(item->info.s1) + 1);
+
             ptr->item = tmp;
             ptr->item->ptr1 = ptr;
             ptr->item->ptr2 = ptr->item->next->ptr2;
-            ptr->item->next->ptr2->item = ptr->item;
+            //обновить указатель на итемы
+            ptr->item->ptr2->item = ptr->item;
             insert = ptr->item;
             break;
         }
@@ -212,6 +230,9 @@ void NewItem(Table* table, Item* item){
 
       nw->item->k2 = (char*)malloc(strlen(item->k2) + 1);
       memcpy(nw->item->k2, item->k2, strlen(item->k2) + 1);
+
+      nw->item->info.s1 = (char*)malloc(strlen(item->info.s1) + 1);
+      memcpy(nw->item->info.s1, item->info.s1, strlen(item->info.s1) + 1);
 
       nw->item->ptr1 = nw;
 
@@ -255,16 +276,162 @@ void NewItem(Table* table, Item* item){
 void k1_search_one(){
 }
 void k1_search_many(){
+}*/
+
+void k1_erase_uno(Table* table, unsigned int key, int ver){
+  key1* ptr = table->ks1->key;
 }
 
-void k1_erase_uno(){
-}
-void k1_update_ver(){
+void free_item(Item* item){
+  free(item->k2);
+  free(item->info.s1);
+  free(item);
 }
 
-void k1_erase_all(){
+void check();
+void output_2(Table*);
+void output_1(Table*);
+
+void k1_erase_all(Table* table, unsigned int key){
+  int pos = bin_find(table->ks1, table->rsize1, key);
+  if(pos < 0){
+    printf("\nТакого ключа нет\n");
+  }
+  else{
+    key1* ptr = table->ks1[pos].key;
+    key1* ptr_nxt;
+    while(ptr != NULL){
+      //delete key from ks2
+      if(ptr->item->ptr2->parent != NULL){
+        ptr->item->ptr2->parent->next = ptr->item->ptr2->next;
+        if(ptr->item->ptr2->next != NULL){
+          ptr->item->ptr2->next->parent = ptr->item->ptr2->parent;
+        }
+      }
+      else{
+        if(ptr->item->ptr2->next != NULL){
+          table->ks2[ptr->item->hash2].key = ptr->item->ptr2->next;
+          table->ks2[ptr->item->hash2].key->parent = NULL;
+        }
+        else{
+          table->ks2[ptr->item->hash2].key = NULL;
+        }
+      }
+      table->ks2[ptr->item->hash2].version -= 1;
+      free(ptr->item->ptr2);
+
+      //delete from ks1
+      Item* itptr = ptr->item;
+      Item* itptr_nxt;
+      while(itptr != NULL){
+        itptr_nxt = itptr->next;
+        free_item(itptr);
+        itptr = itptr_nxt;
+      }
+      ptr_nxt = ptr->next;
+      free(ptr);
+      ptr = ptr_nxt;
+      output_2(table);
+    }
+    check();
+    memmove(table->ks1 + pos, table->ks1 + pos + 1, (table->rsize1 - pos - 1)*sizeof(keyspace1));
+    table->rsize1 -= 1;
+  }
 }
-*/
+
+void k2_erase_one(Table* table, key2* ptr){
+  int pos = bin_find(table->ks1, table->rsize1, ptr->item->k1);
+  if(ptr->item->ptr1->parent != NULL){
+    ptr->item->ptr1->parent->next = ptr->item->ptr1->next;
+    if(ptr->item->ptr1->next != NULL){
+        ptr->item->ptr1->next->parent = ptr->item->ptr1->parent;
+    }
+    table->ks1[pos].version -= 1;
+  }
+  //in the begin
+  else{
+    if(ptr->item->ptr1->next != NULL){
+      table->ks1[pos].key = ptr->item->ptr1->next;
+      table->ks1[pos].key->parent = NULL;
+      table->ks1[pos].version -= 1;
+    }
+    else{
+      memmove(table->ks1 + pos, table->ks1 + pos + 1, (table->rsize1 - pos - 1) * sizeof(keyspace1));
+      table->rsize1 -= 1;
+    }
+  }
+  free(ptr->item->ptr1);
+
+  //delete from ks2
+
+  if(ptr->parent != NULL){
+    ptr->parent->next = ptr->next;
+    if(ptr->next != NULL){
+      ptr->next->parent = ptr->parent;
+    }
+  }
+  else{
+    if(ptr->next != NULL){
+      table->ks2[ptr->item->hash2].key = ptr->next;
+      table->ks2[ptr->item->hash2].key->parent = NULL;
+    }
+    else{
+      table->ks2[ptr->item->hash2].key = NULL;
+    }
+  }
+  table->ks2[ptr->item->hash2].version -= 1;
+  
+  Item* itptr = ptr->item;
+    Item* itptr_nxt;
+    while (itptr != NULL) {
+        itptr_nxt = itptr->next;
+        free_item(itptr);
+        itptr = itptr_nxt;
+    }
+}
+
+
+void k2_erase_all(Table* table, char* k2){
+  int hash2 = hash(k2, table->size2);
+  if(table->ks2[hash2].key == NULL){
+    printf("\nThis key isn't exist\n");
+  }
+  key2* ptr = table->ks2[hash2].key;
+  key2* ptr_nxt;
+  while(ptr != NULL){
+    //erase from key2;
+    ptr_nxt = ptr->next;
+    if(strcmp(ptr->item->k2, k2) == 0){
+      printf("\n    key:  %s\n", ptr->item->k2);
+      k2_erase_one(table, ptr);
+      free(ptr);
+    } 
+    ptr = ptr_nxt;
+  }
+}
+
+void k2_reorganize(Table* table, char* k2){
+  int hash2 = hash(k2, table->size2);
+  if(table->ks2[hash2].key == NULL){
+    printf("\nThis key isn't exist\n");
+  }
+  unsigned int is_find = 0;
+  key2* ptr = table->ks2[hash2].key;
+  key2* ptr_nxt;
+  while(ptr != NULL){
+    //erase from key2;
+    ptr_nxt = ptr->next;
+    if(strcmp(ptr->item->k2, k2) == 0){
+      printf("\n    key:  %s\n", ptr->item->k2);
+      if(is_find != 0){
+        k2_erase_one(table, ptr);
+        free(ptr);
+      }
+      else is_find = 1;
+    } 
+    ptr = ptr_nxt;
+  }
+}
 //keyspace2-------------------------------------------------------------------------------------
 
 
@@ -279,7 +446,7 @@ int hash(char* str, int size){
 /*
 void k2_search_uno(){
 }
-void k2_reorginize(){
+void k2_reorganize(){
 }*/
 
 void output_1(Table* table){
@@ -289,8 +456,10 @@ void output_1(Table* table){
     Item* itptr;
     int j = 0;
     while(ptr != NULL){
-      printf(" %d\n",table->ks1[i].version-j);
-      j++;
+      printf("\npointer %p", ptr);
+      printf("\nparent %p", ptr->parent);
+      printf("\nchild %p", ptr->next);
+      printf(" %d\n",table->ks1[i].version-j++);
       itptr = ptr->item;
       while(itptr != NULL){
         printf("hash: %d, key2:%s, v:%d  ", itptr->hash2, itptr->k2, itptr->ver);
@@ -310,8 +479,7 @@ void output_2(Table* table){
       Item* itptr;
       int j = 0;
       while(ptr != NULL){
-        printf(" %d\n",table->ks2[i].version-j);
-        j++;
+        printf(" %d\n",table->ks2[i].version-j++);
         itptr = ptr->item;
         while(itptr != NULL){
           printf("k1: %d, key2:%s, v:%d;  ", itptr->k1, itptr->k2, itptr->ver);
@@ -349,29 +517,64 @@ int main()
   table.size2 = size2;
   table.rsize1 = 0;
 
-  int key1;
+  unsigned int key1;
   char* key2;
 
   InfoType info;
   Item new;
+  int ans;
   while(n != -1){
-    key2 = (char*)malloc(50);
+    printf("Input oper: 1) new; 2)erase all by 1; 3)erase all by 2; 4)reorganize by key2; -1)exit\n");
+    n = scanf("%d", &ans);
+    if(ans == 1){
+      key2 = (char*)malloc(50);
+      scanf("%d", &key1);
+      scanf("%s", key2);
 
-    scanf("%d", &key1);
-    scanf("%s", key2);
-    n = scanf("%d", &(info.n1));
-    //считали информацию об элементе
-    new.k1 = key1;
-    new.k2 = key2;
-    new.hash2 = hash(key2, size2);
-    new.info = info;
-    NewItem(&table, &new);
+      scanf("%f", &(info.f1));
+      scanf("%f", &(info.f2));
+      info.s1 = (char*)malloc(50);
+      scanf("%s", info.s1);
+      //считали информацию об элементе
+      new.k1 = key1;
+      new.k2 = key2;
+      new.hash2 = hash(key2, size2);
+      new.info = info;
+      NewItem(&table, &new);
+      free(key2);
+      free(info.s1);
+    }
+
+    else if(ans == 2){
+      scanf("%d", &key1);
+      k1_erase_all(&table, key1);
+    }
+
+    else if(ans == 3){
+      char* k2 = (char*)malloc(50);
+      scanf("%s", k2);
+      k2_erase_all(&table, k2);
+      free(k2);
+    }
+
+    else if(ans == 4){
+      char* k2 = (char*)malloc(50);
+      scanf("%s", k2);
+      k2_reorganize(&table, k2);
+      free(k2);
+    }
+
+    else if(ans == -1){
+      printf("\n\nThats all\n");
+      break;
+    }
     output_1(&table);
     printf("#-----------------------");
     output_2(&table);
 
-    free(key2);
   }
+  free(ks1);
+  free(ks2);
 
   return 0;
 }
