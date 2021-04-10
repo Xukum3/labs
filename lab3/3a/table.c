@@ -3,9 +3,10 @@
 #include <stdlib.h>
 #include <string.h>
 
-int bin_find(keyspace1* ks1, int size, unsigned int key){
+int bin_find(keyspace1* ks1, int size, unsigned int key, int* pos){
   int l = 0, r = size - 1;
   int m;
+
   while(l <= r){
     m = (l+r)/2;
     if(ks1[m].val == key){
@@ -18,6 +19,11 @@ int bin_find(keyspace1* ks1, int size, unsigned int key){
       r = m - 1;
     }
   }
+
+  if(size > 0 && key > ks1[size - 1].val)
+    *pos = size;
+  else
+    *pos = l;
   return -1;
 }
 
@@ -44,7 +50,9 @@ void Copy_Item(Item** dest, Item* source){
 
 void NewItem(Table* table, Item* item){
   //insert at 1st keyspace 
-  int place = bin_find(table->ks1, table->rsize1, item->k1);
+  int rpos;
+  int place = bin_find(table->ks1, table->rsize1, item->k1, &rpos);
+  printf("\n        real position %d %d\n", rpos, place);
   unsigned int is_new = 1;
   Item* insert = NULL;
 
@@ -53,8 +61,9 @@ void NewItem(Table* table, Item* item){
       printf("No place\n");                //return NULL
     }
     else{
+      printf("\nyes1\n");
       int i = table->rsize1++;
-      table->ks1[i].val = item->k1;
+      /*table->ks1[i].val = item->k1;
       keyspace1 tmp;
       while(i > 0){
         if(table->ks1[i-1].val > table->ks1[i].val){
@@ -66,7 +75,18 @@ void NewItem(Table* table, Item* item){
         else{
           break;
         }
+      }*/
+      if(rpos == table->rsize1 - 1){
+        printf("\nyes\n");
+        table->ks1[i].val = item->k1;
       }
+      else{
+        printf("\nno\n");
+        printf("\n%d\n", rpos);
+        memmove(table->ks1 + rpos + 1, table->ks1 + rpos, (table->rsize1 - rpos - 1)*sizeof(keyspace1));
+        table->ks1[rpos].val = item->k1;
+      }
+      i = rpos;
       item->next = NULL;
       item->ver = 0;
 
@@ -137,7 +157,7 @@ void NewItem(Table* table, Item* item){
       table->ks2[item->hash2].key->item = insert;
       table->ks2[item->hash2].key->next = NULL;
       table->ks2[item->hash2].key->parent = NULL;
-      table->ks2[item->hash2].version = 0;
+      //table->ks2[item->hash2].version = 0;
       table->ks2[item->hash2].key->v2 = 0;
       table->ks2[item->hash2].key->item->ptr2 = table->ks2[item->hash2].key;
     }
@@ -152,7 +172,7 @@ void NewItem(Table* table, Item* item){
         nw2->next->parent = nw2;
         nw2->parent = NULL;
 
-        table->ks2[item->hash2].version += 1;
+        //table->ks2[item->hash2].version += 1;
 
         table->ks2[item->hash2].key = nw2;
         table->ks2[item->hash2].key->v2 = 0;
@@ -233,7 +253,8 @@ void relink_2(Table* table, key1* ptr){
 }
 //-----------------------------------------------------------
 void k1_erase_one(Table* table, int k1, int ver){
-  int pos = bin_find(table->ks1, table->rsize1, k1);
+  int rpos;
+  int pos = bin_find(table->ks1, table->rsize1, k1, &rpos);
   if(pos < 0){
     printf("\nThis key dont exist\n");
   }
@@ -251,7 +272,7 @@ void k1_erase_one(Table* table, int k1, int ver){
 
       //erase from ks2
       relink_2(table, ptr);
-      table->ks2[ptr->item->hash2].version -= 1;
+      //table->ks2[ptr->item->hash2].version -= 1;
       free(ptr->item->ptr2);
       //----------------------------
       free_item(ptr->item);
@@ -264,7 +285,8 @@ void k1_erase_one(Table* table, int k1, int ver){
 }
 
 void k1_erase_all(Table* table, unsigned int key){
-  int pos = bin_find(table->ks1, table->rsize1, key);
+  int rpos;
+  int pos = bin_find(table->ks1, table->rsize1, key, &rpos);
   if(pos < 0){
     printf("\nThis key dont exist\n");
   }
@@ -274,7 +296,7 @@ void k1_erase_all(Table* table, unsigned int key){
     while(ptr != NULL){
       //delete key from ks2
       relink_2(table, ptr);
-      table->ks2[ptr->item->hash2].version -= 1;
+      //table->ks2[ptr->item->hash2].version -= 1;
       free(ptr->item->ptr2);
 
       //delete from ks1
@@ -291,8 +313,8 @@ void k1_erase_all(Table* table, unsigned int key){
 //------------------
 
 void k2_erase_one(Table* table, key2* ptr){
-
-  int pos = bin_find(table->ks1, table->rsize1, ptr->item->k1);
+  int rpos;
+  int pos = bin_find(table->ks1, table->rsize1, ptr->item->k1, &rpos);
   relink_1(table, ptr->item->ptr1, pos);
   relink_2(table, ptr->item->ptr1);
 
@@ -300,7 +322,7 @@ void k2_erase_one(Table* table, key2* ptr){
 
   //delete from ks2
 
-  table->ks2[ptr->item->hash2].version -= 1;
+  //table->ks2[ptr->item->hash2].version -= 1;
   
   free_item(ptr->item);
 }
@@ -347,10 +369,14 @@ void k2_reorganize(Table* table, char* k2){
     } 
     ptr = ptr_nxt;
   }
+  if(is_find == 0){
+    printf("\nThis key dont exist\n");
+  }
 }
 //-----------------------
 void k1_k2_erase(Table* table, int k1, char* k2){
-  int pos = bin_find(table->ks1, table->rsize1, k1);
+  int rpos;
+  int pos = bin_find(table->ks1, table->rsize1, k1, &rpos);
   if(pos < 0){
     printf("\nThis item dont exist\n");
   }
@@ -366,7 +392,7 @@ void k1_k2_erase(Table* table, int k1, char* k2){
 
     //erase from ks2
     relink_2(table, ptr);
-    table->ks2[ptr->item->hash2].version -= 1;
+    //table->ks2[ptr->item->hash2].version -= 1;
     free(ptr->item->ptr2);
     //----------------------------
     free_item(ptr->item);
@@ -398,7 +424,8 @@ void output_one(Item* itptr){
 }
 
 void output_1(Table* table, unsigned int key){
-  int pos = bin_find(table->ks1, table->rsize1, key);
+  int rpos;
+  int pos = bin_find(table->ks1, table->rsize1, key, &rpos);
   if(pos < 0){
     printf("\nThis key dont exist\n");
   }
@@ -412,7 +439,8 @@ void output_1(Table* table, unsigned int key){
 }
 
 void output_1_1(Table* table, unsigned int k1, int ver){
-  int pos = bin_find(table->ks1, table->rsize1, k1);
+  int rpos;
+  int pos = bin_find(table->ks1, table->rsize1, k1, &rpos);
   if(pos < 0){
     printf("\nThis key dont exist\n");
   }
@@ -476,7 +504,8 @@ void output_2_2(Table* table, char* k2, int ver){
 }
 
 void output_1_2(Table* table, unsigned int k1, char* k2){
-  int pos = bin_find(table->ks1, table->rsize1, k1);
+  int rpos;
+  int pos = bin_find(table->ks1, table->rsize1, k1, &rpos);
   unsigned int is_find = 0;
   if(pos < 0){
     printf("\nThis key dont exist\n");
@@ -498,6 +527,10 @@ void output_1_2(Table* table, unsigned int k1, char* k2){
 }
 
 void output_all(Table* table){
+  if(table->rsize1 == 0){
+    printf("\nTable is empty\n");
+    return;
+  }
   for(int i = 0; i < table->rsize1; i++){
     key1* ptr = table->ks1[i].key;
     while(ptr != NULL){
