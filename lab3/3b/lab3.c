@@ -179,8 +179,8 @@ void delete(Table *table){
   int key1;
   char* key2;
   int ver;
-  printf("Enter:\n\t1 to erase all by key1;\n\t2 to erase all by key2;\n\t3 to reorganize by key2;\n\t");
-  printf("4 to delete by key 1 + version;\n\t5 to delete by combination of keys;\n\t0 to delete all\n\t-1 to return;\n"); 
+  printf("Enter:\n\t1:erase all by key1\n\t2:erase all by key2\n\t3:reorganize by key2\n\t");
+  printf("4:delete by key 1 + version\n\t5:delete by combination of keys\n\t0:delete all\n\t-1:return\n"); 
   while(1){
     printf("Enter a command\n");
     get_num(&ans);
@@ -247,9 +247,9 @@ void output(Table* table){
   int key1;
   char* key2;
   int ver;
-  printf("Enter:\n\t1 to output all;\n\t2 to output by key1;\n\t3 to output by key1 with version;\n\t");
-  printf("4 to output by key2;\n\t5 to output by key2 with version;\n\t6 to output by combination of key1 and k2;\n\t");
-  printf("-1 to return;\n");
+  printf("Enter:\n\t1:output all\n\t2:output by key1\n\t3:output by key1 with version\n\t");
+  printf("4:output by key2\n\t5:output by key2 with version\n\t6:output by combination of key1 and k2\n\t");
+  printf("-1:return\n");
   
   while(1){
     printf("Enter a command\n");
@@ -324,8 +324,8 @@ int main()
   free(name);
 
 	if(!file){
-		perror("fopen() ");
-		return EXIT_SUCCESS;
+	  printf("\nNo such file\n");
+		return 0;
 	}
 	fseek(file, 0, SEEK_END);
 	if(!ftell(file)){
@@ -373,8 +373,8 @@ int main()
     free(str2);
 	}
   if(cont == 1){
-    printf("\n\nWhat do you need?\n");
-    printf("1 for insert;\t2 for delete;\t3 for output;\t4 for exit;\n0 to repeat\n");
+    printf("\n\nWhat do you need?\n\t");
+    printf("1:insert\n\t2:delete\n\t3:output\n\t4:exit\n\t0:repeat\n");
     while(1){
       printf("\nMAIN MENU:\n");
       printf("\nEnter a command:\n");
@@ -399,7 +399,7 @@ int main()
         break;
       }
       else if(ans == 0){
-        printf("Commands. Press:\n1 for insert;\t2 for delete;\t3 for output;\t4 for exit;\t0 to repeat\n");
+        printf("Commands. Press:\n\t1:insert\n\t2:delete\n\t3:output\n\t4:exit\n\t0:repeat\n");
       }
       else{
         printf("\nPlease try again\n");
