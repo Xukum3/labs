@@ -157,8 +157,8 @@ int main(){
                 printf("\ntree is empty\n");
                 continue;
             }
-            delete(&head, key, Elist, &bufer);
             delete_buf(&bufer, key);
+            delete(&head, key, Elist, &bufer);
             free(key);
         }
 

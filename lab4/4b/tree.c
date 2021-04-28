@@ -23,7 +23,7 @@ void print_buf(Buf* bufer){
     }
 }
 
-void clean_buf(Buf* bufer){
+/* void clean_buf(Buf* bufer){
     for(int i = 0; i < buf_size; i++){
         if(bufer->rtime - bufer->elements[i].birth_time > max_time || bufer->elements[i].node == NULL){
             bufer->elements[i].alive = 0;
@@ -31,7 +31,7 @@ void clean_buf(Buf* bufer){
         }
     }
     //print_buf(bufer);
-}
+} */
 
 
 int find_buf(Buf* bufer, char* key){
@@ -48,15 +48,15 @@ int find_buf(Buf* bufer, char* key){
 }
 
 void insert_buf(Buf* bufer, Node* node){
-    if(bufer->rsize == buf_size)
-        clean_buf(bufer);
+    /* if(bufer->rsize == buf_size)
+        clean_buf(bufer); */
 
     int j = hash(node->key);
     int n = 0;
-    while(bufer->elements[j].alive != 0 && n < buf_size){
+    while(bufer->elements[j].alive != 0 && n < buf_size\
+    && bufer->rtime - bufer->elements[j].birth_time <= max_time){
         j = (j+1)%buf_size;
         n += 1;
-
     }
     if(n < buf_size){
         bufer->elements[j].alive = 1;
