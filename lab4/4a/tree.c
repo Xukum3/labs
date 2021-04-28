@@ -19,6 +19,7 @@ Node* find_max(Node* node){
 Node* find_next(Node* node){
     if(node->right != NULL)
         return find_min(node->right);
+
     Node* ptr;
     ptr = node->parent;
     while(ptr != NULL && node == ptr->right){
@@ -30,7 +31,7 @@ Node* find_next(Node* node){
 
 Node* find_prev(Node* node){
     if(node->left != NULL)
-        return find_max(node->right);
+        return find_max(node->left);
     Node* ptr;
     ptr = node->parent;
     while(ptr != NULL && node == ptr->left){
@@ -293,7 +294,6 @@ void read_tree(Node** root, FILE* file){
         fread(&key, sizeof(int), 1, file);
         if(feof(file))
             break;
-        printf("%d\n", key);
         while(1){ 
             Info info;
             Info2 inf2;
@@ -311,7 +311,93 @@ void read_tree(Node** root, FILE* file){
     return;
 }
 
+double count_time(Node* root){
+    int N = 50000;
+    int ans;
+    double avg = 0;
+    clock_t start, finish;
+    while(1){
+        printf("\n\t1: find min\n\t2: find max\n\t3: find key\n\t4: find next\
+                    \n\t5: find prev\n\t-1 exit\n");
+        get_num(&ans);
+        printf("#------------------\n");
 
+        if(ans == 1){
+            for(int i = 0; i < N; i++){
+                start = clock();
+                find_min(root);
+                finish = clock();
+                avg += (double)(finish - start);
+            }
+            return avg/N;
+        }
+
+        if(ans == 2){
+            for(int i = 0; i < N; i++){
+                start = clock();
+                find_max(root);
+                finish = clock();
+                avg += (double)(finish - start);
+            }
+            return avg/N;
+        }
+
+        if(ans == 3){
+            printf("Enter a key:\n");
+            int key;
+            get_num(&key);
+            for(int i = 0; i < N; i++){
+                start = clock();
+                find_key(root, key);
+                finish = clock();
+                avg += (double)(finish - start);
+            }
+            return avg/N;
+        }
+        
+        if(ans == 4){
+            printf("Enter a key:\n");
+            int key;
+            get_num(&key);
+            Node* node = find_key(root, key);
+            if(node == NULL){
+                printf("\nNo such element\n");
+                continue;
+            }
+            for(int i = 0; i < N; i++){
+                start = clock();
+                find_next(node);
+                finish = clock();
+                avg += (double)(finish - start);
+            }
+            return avg/N;
+        }
+
+        if(ans == 5){
+            printf("Enter a key:\n");
+            int key;
+            get_num(&key);
+            Node* node = find_key(root, key);
+            if(node == NULL){
+                printf("\nNo such element\n");
+                continue;
+            }
+            for(int i = 0; i < N; i++){
+                Node* rub;
+                start = clock();
+                rub = find_prev(node);
+                finish = clock();
+                avg += (double)(finish - start);
+            }
+            return avg/N;
+        }
+
+        else if(ans == -1){
+            return 0;
+            break;
+        }
+    }
+}
 
 
 /*void push_back(Node* node, int level, queue* q){

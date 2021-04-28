@@ -100,20 +100,21 @@ int main(){
     }
 
     while(1){
+        printf("#------------------");
         printf("\n\t1 input\n\t2 output\n\t3 find using key\n\t");
         printf("4 fing maxdiff\n\t5 delete\n\t6 print tree\n\t");
-        printf("7 write tree to file\n\t0 exit\n");
+        printf("7 write tree to file\n\t-5 count time\n\t0 exit\n");
         get_num(&ans);
-        printf("\n");
+        printf("#------------------\n");
         if(ans == 1){
             int r;
             Info info;
             int key;
-            printf("\ninfo\n");
+            printf("\ninfo:\n");
             get_num(&(info.d1));
             get_num(&(info.d2));
             info.s1 = get_str(&r);
-            printf("\nkey\n");
+            printf("\nkey:\n");
             get_num(&key);
             insert(key, info, &head);
             free(info.s1);
@@ -170,6 +171,15 @@ int main(){
             free(file_name);
             write_tree(head, file);
             fclose(file);
+        }
+
+        else if(ans == -5){
+            if(head == NULL){
+                printf("\ntree is empty\n");
+                continue;
+            }
+            float time = count_time(head);
+            printf("avg time %lf\n", time);
         }
     }
     return 0;

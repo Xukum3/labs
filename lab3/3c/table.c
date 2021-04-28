@@ -562,6 +562,7 @@ void k2_erase_all(Table* table, char* k2){
 
   if(kptr.offset_key2 == 0){
     printf("\nThis key dont exist\n");
+    return;
   }
 
   key2 ptr2;
@@ -606,6 +607,7 @@ void k2_reorganize(Table* table, char* k2){
 
   if(kptr.offset_key2 == 0){
     printf("\nThis key dont exist\n");
+    return;
   }
 
   key2 ptr;
