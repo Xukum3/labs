@@ -399,6 +399,42 @@ double count_time(Node* root){
     }
 }
 
+void show_tree(Node* node, FILE* graph, int* null_numb){
+    if(node->left != NULL){
+        fprintf(graph, "\t\"%d\"->\"%d\";\n", node->key, node->left->key);
+        if(node->right != NULL){
+            fprintf(graph, "\t\"%d\"->\"%d\";\n", node->key, node->right->key);
+            show_tree(node->left, graph, null_numb);
+            show_tree(node->right, graph, null_numb);
+        }
+        else{
+            fprintf(graph, "\tnull%d[shape=point];\n", *null_numb);
+            fprintf(graph, "\t\"%d\"->\"null%d\";\n", node->key, (*null_numb)++);
+            show_tree(node->left, graph, null_numb);
+        }
+        
+    }
+    else{
+        if(node->right != NULL){
+            if(node->left != NULL)
+                fprintf(graph, "\t\"%d\"->\"%d\";\n", node->key, node->left->key);
+            else{
+                fprintf(graph, "\tnull%d[shape=point];\n", *null_numb);
+                fprintf(graph, "\t\"%d\"->\"null%d\";\n", node->key, (*null_numb)++);
+            }
+
+            fprintf(graph, "\t\"%d\"->\"%d\";\n", node->key, node->right->key);
+
+            if(node->left != NULL){
+                show_tree(node->left, graph, null_numb);
+                show_tree(node->right, graph, null_numb);
+            }
+            else
+                show_tree(node->right, graph, null_numb);
+        }
+    }
+}
+
 
 /*void push_back(Node* node, int level, queue* q){
     elem* nw = (elem*)malloc(sizeof(elem));
@@ -454,3 +490,44 @@ if(root == NULL){
         q.size -= 1;
 
     } */
+
+    int f_min(Node* root, int key){
+        Node* node = root;
+        while(1){
+            while(node->key < key){
+                if(node->right == NULL){
+                    return -1;
+                }
+                node = node->right;
+            }
+            while(node->left){
+                if(node->left->key > key){
+                    node = node->left;
+                }
+                else if(node->left->key == key){
+                    return node->left->key;
+                }
+                else break;
+            }
+
+            if(node->left == NULL){
+                return node->key;
+            }
+            else{
+                Node* ptr = node->left->right;
+                while(ptr){
+                    if(ptr->key < key)
+                        ptr = ptr->right;
+                    else if(ptr->key == key)
+                        return ptr->key;
+                    else{
+                        node = ptr;
+                        break;
+                    }
+                }
+                if(node != ptr){
+                    return node->key;
+                }
+            }
+        }
+    }

@@ -135,12 +135,24 @@ int main(){
         }
     }
 
+    pr_q q;
+    q.size = 0;
+    q.rsize = 0;
+    q.array = (int*)malloc(10*sizeof(int));
+    
     while(1){
         printf("#------------------");
         printf("\n\t1 Add vertex\n\t2 Add edge\n\t3 Delete vertex\n\t");
         printf("4 Delete edge\n\t5 Print graph\n\t6 BFS\n\t");
         printf("7 Dijkstra\n\t8 \"3 shortest routs\" \n\t9 Count time\n\t");
-        printf("10 Visualise (Graphviz)\n\t0 exit\n");
+        printf("10 Visualise (Graphviz)\n\t0 exit\n\t");
+        printf("20 FF\n\t");
+        printf("21 BF\n\t");
+        printf("22 top sort\n");
+        printf("23 kss\n");
+        printf("31 add prior_q\n");
+        printf("32 pop prior_q\n");
+
         get_num(&ans);
         printf("#------------------\n");
 
@@ -153,6 +165,61 @@ int main(){
             r = add_vertex(&G, x, y);
             if(r < 0)
                 printf("\nError. This vertex exists\n");
+        }
+
+        else if(ans == 31){
+            int x;
+            get_num(&x);
+           // get_num(&y);
+            prq_insert(&q, x);
+            for(int i = 0; i < q.size; i++){
+                printf("%d ", q.array[i]);
+            }
+            printf("\n");
+        }
+
+        else if(ans == 32){
+           // get_num(&y);
+            int max = prq_pop(&q);
+            printf("max: %d\n", max);
+
+            for(int i = 0; i < q.rsize; i++){
+                printf("%d ", q.array[i]);
+            }
+            printf("\n");
+
+        }
+
+        else if(ans == 20){
+            printf("\nDiapasone: %d\n", G.size);
+            int x, y;
+            get_num(&x);
+            get_num(&y);
+            F_F(&G, x, y);
+        }
+
+        else if(ans == 21){
+            printf("\nDiapasone: %d\n", G.size);
+            int x, y;
+            get_num(&x);
+           // get_num(&y);
+            B_f(&G, x);
+
+        }
+
+        else if(ans == 22){
+            printf("\nDiapasone: %d\n", G.size);
+            int x, y;
+            get_num(&x);
+           // get_num(&y);
+            int* visited = (int*)calloc(G.size, sizeof(int));
+            top_sort(&G, visited);
+            free(visited);
+
+        }
+
+        else if(ans == 23){
+            kss(&G);
         }
 
         else if(ans == 2){
@@ -228,16 +295,16 @@ int main(){
             get_num(&x);
             get_num(&y);
 
-            get_num(&x2);
+            /*get_num(&x2);
             get_num(&y2);
 
             int start = find_vertex(&G, x, y);
             int finish = find_vertex(&G, x2, y2);
             double ans;
             int* way = calloc(G.size, sizeof(int));
-
-            result = Dijkstra(&G, start, finish, way, &ans);
-            if(result == -2)
+ */
+            d_dij(&G, x, y);
+           /*  if(result == -2)
                 printf("\nNo such vertexes\n");
             else if(result == -1)
                 printf("\nVertexes are equal\n");
@@ -249,7 +316,7 @@ int main(){
                 print_way(-start - 1, -finish - 1, way, &G);
                 printf("\n");
             }
-            free(way);
+            free(way); */
         }
 
         else if(ans == 8){
@@ -295,13 +362,13 @@ int main(){
                 continue;
             }
             FILE* graph = fopen("graph.dot", "w");
-            fputs("graph G{ \n", graph);
+            fputs("digraph G{ \n", graph);
             fputs("\tnode [shape=circle]; \n", graph);
             show_graph(&G, graph);
             fputs("}", graph);
             fclose(graph);
-            //system("dot graph.dot | neato -n -Tpng -o graph.png");
-            system("neato graph.dot -Tpng -o graph.png");
+            system("dot graph.dot | neato -n -Tpng -o graph.png");
+            //system("neato graph.dot -Tpng -o graph.png");
         }
     }
 

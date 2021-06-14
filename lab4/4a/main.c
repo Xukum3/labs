@@ -103,7 +103,7 @@ int main(){
         printf("#------------------");
         printf("\n\t1 input\n\t2 output\n\t3 find using key\n\t");
         printf("4 fing maxdiff\n\t5 delete\n\t6 print tree\n\t");
-        printf("7 write tree to file\n\t-5 count time\n\t0 exit\n");
+        printf("7 write tree to file\n\t8 graphviz\n\t-5 count time\n\t0 exit\n");
         get_num(&ans);
         printf("#------------------\n");
         if(ans == 1){
@@ -144,6 +144,12 @@ int main(){
             delete(&head, key);
         }
 
+        else if(ans == 100){
+            int key;
+            get_num(&key);
+            printf("%d", f_min(head, key));
+        }
+
         else if(ans == 0){
             if(head != NULL)
                 delete_all(head);
@@ -180,6 +186,24 @@ int main(){
             }
             float time = count_time(head);
             printf("avg time %lf\n", time);
+        }
+
+        else if(ans == 8){
+            if(head == NULL){
+                printf("\ntree is empty\n");
+                continue;
+            }
+            
+            FILE* graph = fopen("tree.dot", "w");
+            fputs("digraph G{ \n", graph);
+            fputs("\tgraph [ordering=\"out\"];\n", graph);
+            int null_numb = 0;
+            /* fputs("\tnull0[shape=point];\n", graph); */
+            show_tree(head, graph, &null_numb);
+            fputs("}", graph);
+            fclose(graph);
+            system("dot tree.dot | neato -n -Tpng -o tree.png");
+            printf("\n");
         }
     }
     return 0;

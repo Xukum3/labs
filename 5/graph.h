@@ -2,7 +2,7 @@
 #define GRAPH_H
 
 typedef struct Edge{
-    double dist;
+    int dist;
     int vert_pos;
     struct Edge* next;
     //struct Info* prev;
@@ -45,6 +45,12 @@ typedef struct queue{
     q_elem* last;
 }queue;
 
+typedef struct pr_q{
+    int* array;
+    int size;
+    int rsize;
+}pr_q;
+
 
 int find_vertex(Graph* G, int x, int y);
 int add_vertex(Graph* G, int x, int y);
@@ -67,4 +73,14 @@ void write_graph(Graph* G, FILE* file);
 void read_graph(Graph* G, FILE* file);
 void count_time(Graph* G);
 
+void F_F(Graph* G, int start, int end);
+void B_f(Graph* G, int start);
+void top_sort(Graph* G, int* visited);
+
+void prq_insert(pr_q* q, int key);
+int prq_pop(pr_q* q);
+
+void kss(Graph* G);
+
+void d_dij(Graph* G, int start, int finish);
 #endif //GRAPH_H

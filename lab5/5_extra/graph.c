@@ -87,7 +87,7 @@ void print_graph(Graph G){
     }
     for(int i = 0; i < G.size; i++){
         if(G.vertexes[i].busy != 0){
-            printf("\n%d %d\n", G.vertexes[i].x, G.vertexes[i].y);
+            printf("\n%lf %lf\n", G.vertexes[i].x, G.vertexes[i].y);
             Edge* e = G.vertexes[i].edges;
             if(e == NULL){
                 printf("\tVertex is isolated\n");
@@ -262,11 +262,11 @@ void push_back(queue* q, int vertex){
 void print_way(int start, int vertex, int* way, Graph* G){
     if(vertex != start)
         print_way(start, way[vertex], way, G);
-    printf("(%d %d)", G->vertexes[vertex].x, G->vertexes[vertex].y);
+    printf("(%.2lf %.2lf)\n", G->vertexes[vertex].x, G->vertexes[vertex].y);
 }
 
 int BFS(Graph* G, int start, int finish, int* way, int* ans){
-    if(start >= 0 || finish >= 0){
+    if(start >= 0 || finish >= 0 || start < -G->size || finish < -G->size){
         return -2;
     }
 
@@ -320,7 +320,7 @@ int BFS(Graph* G, int start, int finish, int* way, int* ans){
 }
 
 int Dijkstra(Graph* G, int start, int finish, int* way, double* ans){
-    if(start >= 0 || finish >= 0){
+    if(start >= 0 || finish >= 0 || start < -G->size || finish < -G->size){
         return -2;
     }
 
@@ -355,6 +355,8 @@ int Dijkstra(Graph* G, int start, int finish, int* way, double* ans){
             e = e->next;
         }
 
+        visited[u] = 1;
+
         //---------find_next_vertex------------
         int w = INT_MAX;
         u = -1;
@@ -379,8 +381,6 @@ int Dijkstra(Graph* G, int start, int finish, int* way, double* ans){
             free(dist);
             return 1;
         }
-
-        visited[u] = 1;
     }
 }
 
@@ -510,7 +510,7 @@ void show_graph(Graph* G, FILE* graph){
 
     for(int i = 0; i < G->size; i++){
         if(G->vertexes[i].busy == 1){
-            fprintf(graph, "\t\"%d %d\" [pos=\"%d,%d!\"]\n", G->vertexes[i].x, G->vertexes[i].y, G->vertexes[i].x, G->vertexes[i].y);    
+            fprintf(graph, "\t\"%d\" [pos=\"%.2lf,%.2lf!\"]\n", i, G->vertexes[i].x, G->vertexes[i].y);    
         }
     }
     for(int i = 0; i < G->size; i++){
@@ -526,9 +526,7 @@ void show_graph(Graph* G, FILE* graph){
                     //fprintf(graph, "\t\"%d %d\" -- \"%d %d\" [label = \"%.2lf\"];\n", \
                     G->vertexes[i].x, G->vertexes[i].y, G->vertexes[e->vert_pos].x, G->vertexes[e->vert_pos].y, e->dist);
 
-                    fprintf(graph, "\t\"%d %d\" -- \"%d %d\";\n", \
-                    G->vertexes[i].x, G->vertexes[i].y, G->vertexes[e->vert_pos].x, G->vertexes[e->vert_pos].y);
-
+                    fprintf(graph, "\t\"%d\" -- \"%d\";\n", i, e->vert_pos);
                 e = e->next;
             }
         }
@@ -594,27 +592,51 @@ void write_graph(Graph* G, FILE* file){
     }
 }
 
+int read_number(char* str, FILE* file){
+    for(int i = 0; i < 15; i++){
+        fread(str + i, 1, 1, file);
+        if(str[i] != 45 && (str[i] < 48 || str[i] > 57)){
+            str[i] = '\0';
+            return atoi(str);
+        }
+    }
+}
+
+double read_double(char* str, FILE* file){
+    for(int i = 0; i < 15; i++){
+        fread(str + i, 1, 1, file);
+        if((str[i] < 48 || str[i] > 57) && str[i] != 46 && str[i] != 45){
+            str[i] = '\0';
+            return atof(str);
+        }
+    }
+}
+
 void read_graph(Graph* G, FILE* file){
     rewind(file);
-    fread(&(G->size), sizeof(int), 1, file);
+    char str[15];
+    G->size = read_number(str, file);
     G->vertexes = (Vertex*)malloc(G->size * sizeof(Vertex));
 
+    char buf;
+    int rubbish;
     for(int i = 0; i < G->size; i++){
-        fread(&(G->vertexes[i].busy), sizeof(int), 1, file);
-        fread(&(G->vertexes[i].x), sizeof(int), 1, file);
-        fread(&(G->vertexes[i].y), sizeof(int), 1, file);
+        rubbish = read_number(str, file);
+        G->vertexes[i].x = read_double(str, file);
+        G->vertexes[i].y = read_double(str, file);
         G->vertexes[i].edges = NULL;
+        G->vertexes[i].busy = 1;
     }
+    int edge_n = read_number(str, file);
 
-    while(1){
+    for(int i = 0; i < edge_n; i++){
+        int rubbish;
         int pos1, pos2;
         double dist;
-        fread(&(pos1), sizeof(int), 1, file);
-        if(feof(file)){
-            break;
-        }
-        fread(&(pos2), sizeof(int), 1, file);
-        fread(&(dist), sizeof(double), 1, file);
+        rubbish = read_number(str, file);
+        pos1 = read_number(str, file);
+        pos2 = read_number(str, file);
+        dist = read_double(str, file);
 
         Edge* tmp = G->vertexes[pos1].edges;
         G->vertexes[pos1].edges = (Edge*)malloc(sizeof(Edge));
@@ -746,4 +768,12 @@ void count_time(Graph* G){
         }
     }
 }
+
+ /*  while(1){
+            fread(&buf, 1, 1, file);
+            if(str[i] == 45 || (str[i] >= 48 && str[i] <= 57)){
+                fseek(file, -1, SEEK_SET);
+                break;
+            }
+        } */
 

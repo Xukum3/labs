@@ -57,5 +57,7 @@ void write_tree(Node* node, FILE* file);
 void read_tree(Node** node, FILE* file);
 double count_time(Node* root);
 void get_num(int* x);
+void show_tree(Node* node, FILE* graph, int* null_numb);
+int f_min(Node* root, int key);
 
 #endif

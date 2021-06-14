@@ -194,19 +194,14 @@ int main(){
         }
 
         else if(ans == 6){
-            int x, y, x2, y2, result;
-            get_num(&x);
-            get_num(&y);
+            int start, finish, result;
+            get_num(&start);
+            get_num(&finish);
 
-            get_num(&x2);
-            get_num(&y2);
-
-            int start = find_vertex(&G, x, y);
-            int finish = find_vertex(&G, x2, y2);
             int ans;
             int* way = calloc(G.size, sizeof(int));
 
-            result = BFS(&G, start, finish, way, &ans);
+            result = BFS(&G, -start - 1, -finish - 1, way, &ans);
 
             if(result == 0)
                 printf("\nNo way through this two vertexes\n");
@@ -216,27 +211,22 @@ int main(){
                 printf("\nVertexes are equal\n");
             else{
                 printf("\nSuccessfull\n");
-                printf("Distance: %d\n\t", ans);
-                print_way(-start - 1, -finish - 1, way, &G);
+                printf("Distance: %d\n", ans);
+                print_way(start, finish, way, &G);
                 printf("\n");
             }
             free(way);
         }
 
         else if(ans == 7){
-            int x, y, x2, y2, result;
-            get_num(&x);
-            get_num(&y);
+            int start, finish, result;
+            get_num(&start);
+            get_num(&finish);
 
-            get_num(&x2);
-            get_num(&y2);
-
-            int start = find_vertex(&G, x, y);
-            int finish = find_vertex(&G, x2, y2);
             double ans;
             int* way = calloc(G.size, sizeof(int));
 
-            result = Dijkstra(&G, start, finish, way, &ans);
+            result = Dijkstra(&G, -start - 1, -finish - 1, way, &ans);
             if(result == -2)
                 printf("\nNo such vertexes\n");
             else if(result == -1)
@@ -245,8 +235,8 @@ int main(){
                 printf("\nNo way through this two vertexes\n");
             else{
                 printf("\nSuccessfull\n");
-                printf("Distance: %lf\n\t", ans);
-                print_way(-start - 1, -finish - 1, way, &G);
+                printf("Distance: %lf\n", ans);
+                print_way(start, finish, way, &G);
                 printf("\n");
             }
             free(way);
@@ -257,13 +247,13 @@ int main(){
             e_FL elems[3];
             Fl_V(&G, next, elems);
 
-            printf("\n(%d %d) (%d %d) %lf\n\t", G.vertexes[elems[0].pos1].x, G.vertexes[elems[0].pos1].y,\
+            printf("\n(%.2lf %.2lf) (%.2lf %.2lf) %lf\n\t", G.vertexes[elems[0].pos1].x, G.vertexes[elems[0].pos1].y,\
                                         G.vertexes[elems[0].pos2].x, G.vertexes[elems[0].pos2].y, elems[0].dist);
             path(next, elems[0].pos1, elems[0].pos2, &G);
-            printf("\n(%d %d) (%d %d) %lf\n\t", G.vertexes[elems[1].pos1].x, G.vertexes[elems[1].pos1].y,\
+            printf("\n(%.2lf %.2lf) (%.2lf %.2lf) %lf\n\t", G.vertexes[elems[1].pos1].x, G.vertexes[elems[1].pos1].y,\
                                         G.vertexes[elems[1].pos2].x, G.vertexes[elems[1].pos2].y, elems[1].dist);
             path(next, elems[1].pos1, elems[1].pos2, &G);
-            printf("\n(%d %d) (%d %d) %lf\n\t", G.vertexes[elems[2].pos1].x, G.vertexes[elems[2].pos1].y,\
+            printf("\n(%.2lf %.2lf) (%.2lf %.2lf) %lf\n\t", G.vertexes[elems[2].pos1].x, G.vertexes[elems[2].pos1].y,\
                                         G.vertexes[elems[2].pos2].x, G.vertexes[elems[2].pos2].y, elems[2].dist);
             path(next, elems[2].pos1, elems[2].pos2, &G);
             printf("\n");
@@ -296,12 +286,12 @@ int main(){
             }
             FILE* graph = fopen("graph.dot", "w");
             fputs("graph G{ \n", graph);
-            fputs("\tnode [shape=circle]; \n", graph);
+            fputs("\tnode [shape=point]; \n", graph);
             show_graph(&G, graph);
             fputs("}", graph);
             fclose(graph);
             //system("dot graph.dot | neato -n -Tpng -o graph.png");
-            system("neato graph.dot -Tpng -o graph.png");
+            //system("neato graph.dot -Tpng -o graph.png");
         }
     }
 

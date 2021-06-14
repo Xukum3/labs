@@ -381,7 +381,7 @@ void left_del_correct_tree(Node* par, Node* Elist, Node** root){
             par->balance = -1;
             par->right->balance = 0;
         }
-        else if(par->right->balance == 1){
+        else if(par->right->left->balance == 1){
             par->right->left->balance = 0;
             par->right->balance = 1;
             par->balance = 0;
@@ -425,8 +425,8 @@ void right_del_correct_tree(Node* par, Node* Elist, Node** root){
             par->balance = 0;
         }
         else{
-            par->right->left->balance = 0;
-            par->right->balance = 0;
+            par->left->right->balance = 0;
+            par->left->balance = 0;
             par->balance = 0;
         }
         left_rotate(root, par->left, Elist);

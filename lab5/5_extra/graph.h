@@ -18,8 +18,8 @@ typedef struct Edge{
 typedef struct Vertex{
     int busy;
     Edge* edges;
-    int x;
-    int y;
+    double x;
+    double y;
 }Vertex;
 
 typedef struct Graph{
